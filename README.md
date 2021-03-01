@@ -10,7 +10,7 @@
 ```json
 {
     "require": {
-        "mihanentalpo/fio-analyzer": "*"
+        "svk/fio-analyzer": "*"
     }
 }
 ```
@@ -31,7 +31,7 @@ require_once("./vendor/autoload.php");
 ```php
 <?php
 require_once("./vendor/autoload.php");
-$fa = new \Mihanentalpo\FioAnalyzer\FioAnalyzer();
+$fa = new \svk\FioAnalyzer\FioAnalyzer();
 $names = $fa->break_apart("Иваанов иван Ыванович");
 print_r($names);
 ```
