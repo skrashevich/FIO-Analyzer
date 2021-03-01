@@ -3,3 +3,4 @@ composer.lock
 .directory
 *.index
  
+test/import*

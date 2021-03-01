@@ -1,5 +1,5 @@
 <?php
-namespace Mihanentalpo\FioAnalyzer;
+namespace svk\FioAnalyzer;
 /**
  * Компонент анализа ФИО.
  * Позволяет определить фамилию, имя, отчества из набора слов
@@ -51,14 +51,17 @@ class FioAnalyzer
     {
         $ffs_var = $type . "_ffs";
         $ffs = new \Mihanentalpo\FastFuzzySearch\FastFuzzySearch();// Mihanentalpo\FastFuzzySearch\FastFuzzySearch();
-        if (file_exists($filename . ".index"))
+
+		$md5 = md5_file($filename);
+		$indexname = sys_get_temp_dir().basename($filename, '.php').$md5.'.index';
+        if (file_exists($indexname))
         {
-            $ffs->unserializeIndex(file_get_contents($filename . ".index"));
+            $ffs->unserializeIndex(file_get_contents($indexname));
         }
         else
         {
             $ffs->init(require($filename));
-            file_put_contents($filename . ".index", $ffs->serializeIndex());
+            file_put_contents($indexname, $ffs->serializeIndex());
         }
         $this->{$ffs_var} = $ffs;
     }
@@ -122,7 +125,7 @@ class FioAnalyzer
 		}
 
 		$variants = $this->getNof3combinations( count( $parts ) );
-    
+
         $min = 10000000;
         $max = -10000000;
     
@@ -136,15 +139,15 @@ class FioAnalyzer
 				//echo $p . "/" . count($parts) . "\n";
                 
                 $found[0] = $this->searchIn( "first_names", $p, $min, $max, $edge );
-				$found[1] = $this->searchIn( "last_names", $p, $min, $max, $edge );
-				$found[2] = $this->searchIn( "second_names", $p, $min, $max, $edge );
+				$found[1] = $this->searchIn( "second_names", $p, $min, $max, $edge );
+				$found[2] = $this->searchIn( "last_names", $p, $min, $max, $edge );
 
 				//print_r($found[0]);
 
 				$partsFound[$key] = $found;
 
 			}
-
+			
 		}
 		$max = 0;
 		$maxVar = -1;
@@ -158,11 +161,11 @@ class FioAnalyzer
 				{
 					if (!isset($partsFound[$pos]))
 					{
-						$xxx = true;
+						continue;
 					}
 					elseif (!isset($partsFound[$pos][$num - 1]))
 					{
-						$yyy = true;
+						continue;
 					}
 
 					$perc = $partsFound[$pos][$num - 1]['percent'];
@@ -183,13 +186,13 @@ class FioAnalyzer
 		}
 		foreach ( $variants[$maxVar] as $k => $v )
 		{
-			if ( $v > 0 && $partsFound[$k][$v - 1]['percent'] > 0 )
+			if ( $v > 0 && $partsFound[$k] && @$partsFound[$k][$v - 1]['percent'] > 0 )
 			{
-                if (!isset($partsFound[$k][$v - 1]['value']))
+                if (!isset($partsFound[$k][$v - 1]['word']))
                 {
-                    $partsFound[$k][$v - 1]['value'] = 0;
+                    $partsFound[$k][$v - 1]['word'] = '';
                 }
-				$result[$typeNames[$v - 1]] = array('src'=>$parts[$k],'found'=>$partsFound[$k][$v - 1]['value'],'percent'=>$partsFound[$k][$v - 1]['percent']);
+				$result[$typeNames[$v - 1]] = array('src'=>$parts[$k],'found'=>$partsFound[$k][$v - 1]['word'],'percent'=>$partsFound[$k][$v - 1]['percent']);
 			}
 		}
 
@@ -235,9 +238,19 @@ class FioAnalyzer
         
         $result = $this->{$names_ffs}->find($p, 1);
         
-        $found = $result[0];
-        
-		return $found;
+        if(!is_array($result))
+		{
+			return null;
+		}
+		if(!isset($result[0]))
+		{
+			return null;
+		}
+
+		if ( $result[0]['percent'] < $edge )
+			return null;
+		else
+			return $result[0];
 	}
 
 	
