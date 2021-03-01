@@ -53,7 +53,7 @@ class FioAnalyzer
         $ffs = new \Mihanentalpo\FastFuzzySearch\FastFuzzySearch();// Mihanentalpo\FastFuzzySearch\FastFuzzySearch();
 
 		$md5 = md5_file($filename);
-		$indexname = sys_get_temp_dir().basename($filename, '.php').$md5.'.index';
+		$indexname = sys_get_temp_dir().'/'.basename($filename, '.php').$md5.'.index';
         if (file_exists($indexname))
         {
             $ffs->unserializeIndex(file_get_contents($indexname));
